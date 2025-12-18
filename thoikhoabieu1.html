@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sắp Xếp Lịch Tín Chỉ</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --bg-body: #fff0f5;
+            --primary: #ff8a80;
+            --primary-dark: #e57373;
+            --secondary: #81c784;
+            --accent: #29b6f6;
+            --text: #37474f;
+            --border: #ffccbc;
+            --header-height: 55px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-body);
+            color: var(--text);
+            font-size: 14px;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            height: var(--header-height);
+            background: #ffffff;
+            border-bottom: 3px dashed var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        h1 {
+            margin: 0;
+            color: var(--primary-dark);
+            text-transform: uppercase;
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        .app-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 15px;
+            padding: 15px;
+            height: calc(100vh - var(--header-height));
+            overflow: hidden;
+        }
+
+        .sidebar {
+            background: #ffffff;
+            border-radius: 20px;
+            border: 3px solid #ffccbc;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(255, 171, 145, 0.2);
+        }
+
+        .sidebar-scroll {
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .sec-title {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: white;
+            padding: 8px;
+            border-radius: 15px;
+            text-align: center;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        .st-info {
+            background: var(--primary);
+        }
+
+        .st-sched {
+            background: var(--secondary);
+        }
+
+        .st-opt {
+            background: #90a4ae;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 5px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #5d4037;
+            margin-bottom: 4px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ffe0b2;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #fffbfb;
+            color: #333;
+            transition: 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(255, 138, 128, 0.2);
+        }
+
+        .session-block {
+            background: #f1f8e9;
+            border: 2px dashed #a5d6a7;
+            padding: 12px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .btn-remove-session {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef5350;
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-add-row {
+            background: white;
+            border: 2px dashed var(--secondary);
+            color: var(--secondary);
+            width: 100%;
+            padding: 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-add-row:hover {
+            background: #e8f5e9;
+            transform: translateY(-2px);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .btn-submit {
+            background-color: var(--primary);
+            color: white;
+            width: 100%;
+            height: 45px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 15px;
+            box-shadow: 0 4px 0 #d84315;
+            transition: 0.1s;
+        }
+
+        .btn-submit:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .btn-submit.editing {
+            background-color: #ffa726;
+            box-shadow: 0 4px 0 #ef6c00;
+        }
+
+        .btn-cancel {
+            background: #b0bec5;
+            color: white;
+            width: 80px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #78909c;
+            display: none;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            background: white;
+            padding: 10px;
+            border-radius: 15px;
+            border: 2px solid #b39ddb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .total-box {
+            font-weight: bold;
+            color: var(--text);
+            font-size: 15px;
+        }
+
+        .total-badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 16px;
+        }
+
+        .tools-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-tool {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+
+        .btn-tool:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-save {
+            background: #00897b;
+        }
+
+        .btn-load {
+            background: #5e35b1;
+        }
+
+        .btn-clear {
+            background: #c62828;
+        }
+
+        .btn-snap {
+            background: #0277bd;
+        }
+
+        .btn-tkb {
+            background: #ff9800;
+            box-shadow: 0 3px 0 #e65100;
+        }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 15px;
+            border: 3px solid #90caf9;
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-scroll {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #64b5f6;
+            color: white;
+            padding: 14px;
+            text-transform: uppercase;
+            font-size: 13px;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        td {
+            border-bottom: 1px dashed #ce93d8;
+            padding: 10px 6px;
+            text-align: center;
+            vertical-align: top;
+            font-size: 14px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f3e5f5;
+        }
+
+        tr:hover {
+            background-color: #e1f5fe;
+        }
+
+        .action-cell button {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 0 4px;
+            transition: transform 0.2s;
+        }
+
+        .action-cell button:hover {
+            transform: scale(1.3);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 20000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-alert {
+            background: white;
+            width: 400px;
+            border-radius: 30px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15), 0 0 0 8px #ffccbc;
+            animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .modal-tkb-box {
+            background: #fff;
+            width: 95%;
+            max-width: 1400px;
+            height: 90vh;
+            border-radius: 25px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            animation: slideUp 0.4s ease-out;
+            border: 4px solid var(--secondary);
+        }
+
+        .tkb-header {
+            background: #e8f5e9;
+            padding: 15px 20px;
+            border-bottom: 3px solid var(--secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .tkb-body {
+            flex: 1;
+            overflow: hidden;
+            background: #fafafa;
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+            min-height: 0;
+        }
+
+        .tkb-column {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid #b2dfdb;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            min-height: 0;
+        }
+
+        .tkb-scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .phase-badge {
+            text-align: center;
+            padding: 12px;
+            font-weight: 800;
+            color: white;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            flex-shrink: 0;
+        }
+
+        .p1 {
+            background: #ff7043;
+        }
+
+        .p2 {
+            background: #42a5f5;
+        }
+
+        .tkb-table-inner {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .tkb-table-inner th {
+            background: #eceff1;
+            color: #37474f;
+            border: 1px solid #cfd8dc;
+            padding: 10px;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .tkb-table-inner td {
+            border: 1px solid #eceff1;
+            vertical-align: top;
+            padding: 5px;
+            width: 12.8%;
+            height: 100px;
+            background: white;
+        }
+
+        .tkb-item {
+            background: #e1f5fe;
+            border-left: 5px solid #039be5;
+            padding: 6px;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            font-size: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: 0.2s;
+            cursor: default;
+        }
+
+        .tkb-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .tkb-item b {
+            display: block;
+            color: #01579b;
+            font-size: 13px;
+            margin-bottom: 3px;
+            font-weight: 900;
+        }
+
+        .tkb-loc {
+            font-weight: 800;
+            color: #d84315;
+        }
+
+        .tkb-week {
+            font-size: 11px;
+            color: #333;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 2px 4px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 2px;
+            border: 1px solid #cfd8dc;
+            font-weight: bold;
+        }
+
+        #snapshot-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            z-index: 99999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        #snapshot-content {
+            width: 100%;
+            max-width: 1800px;
+            background: white;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .snap-col {
+            flex: 1;
+            border: 2px solid #b2dfdb;
+            border-radius: 10px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .snap-col .tkb-scroll-area {
+            overflow: visible !important;
+            height: auto !important;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.5);
+                opacity: 0
+            }
+
+            70% {
+                transform: scale(1.05)
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1
+            }
+        }
+
+        @media (max-width: 900px) {
+            .app-container {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                overflow: auto;
+            }
+
+            .sidebar {
+                height: auto;
+                overflow: visible;
+            }
+
+            .table-wrapper {
+                height: 500px;
+            }
+
+            .tkb-body {
+                flex-direction: column;
+                overflow: auto;
+            }
+
+            .tkb-column {
+                min-height: 500px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>🌸 Sắp Xếp Lịch Tín Chỉ 🌸</h1>
+    </header>
+    <div id="alertModal" class="modal-overlay">
+        <div class="modal-alert">
+            <div id="alertIcon" style="font-size: 60px; margin-bottom: 15px;">🔔</div>
+            <h2 id="alertTitle" style="margin: 0 0 10px 0; color: #333;">Thông báo</h2>
+            <div id="alertMsg" style="color: #666; margin-bottom: 25px; line-height: 1.6; font-size: 15px;"></div>
+            <button onclick="document.getElementById('alertModal').style.display='none'" id="alertBtn"
+                style="background: linear-gradient(45deg, #ff8a80, #ff5252); color:white; border:none; padding:12px 40px; border-radius: 50px; font-weight:bold; cursor:pointer; font-size:16px; box-shadow: 0 5px 15px rgba(255, 82, 82, 0.4);">OK</button>
+        </div>
+    </div>
+    <div id="tkbModal" class="modal-overlay">
+        <div class="modal-tkb-box">
+            <div class="tkb-header">
+                <h2 style="margin:0; color:var(--secondary); text-transform:uppercase; font-size:1.5rem;">📅 Thời Khóa
+                    Biểu</h2>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="snapTKB()"
+                        style="background:#29b6f6; color:white; border:none; padding:10px 20px; border-radius:12px; cursor:pointer; font-weight:bold; box-shadow: 0 4px 0 #0288d1; display:flex; align-items:center; gap:5px;">📸
+                        Chụp Ảnh</button>
+                    <button onclick="document.getElementById('tkbModal').style.display='none'"
+                        style="background:#e57373; color:white; border:none; padding:10px 20px; border-radius:12px; cursor:pointer; font-weight:bold; box-shadow: 0 4px 0 #d32f2f;">Đóng</button>
+                </div>
+            </div>
+            <div class="tkb-body" id="tkbPreviewBody"></div>
+        </div>
+    </div>
+    <div id="snapshot-overlay">
+        <h1 style="color:var(--primary-dark); margin-bottom:20px; font-size: 2rem;">THỜI KHÓA BIỂU</h1>
+        <div id="snapshot-content"></div>
+    </div>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-scroll">
+                <div class="sec-title st-info">📝 THÔNG TIN MÔN</div>
+                <div class="form-group">
+                    <label>Tên Lớp (*)</label>
+                    <input type="text" id="className" placeholder="VD: HIS 221 A"
+                        oninput="this.value = this.value.toUpperCase()" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>Số Tín Chỉ (*)</label>
+                    <select id="credits" onchange="toggleCustom(this, 'cusCred')">
+                        <option value="3">3 Tín</option>
+                        <option value="1">1 Tín</option>
+                        <option value="2">2 Tín</option>
+                        <option value="4">4 Tín</option>
+                        <option value="custom">-- Khác --</option>
+                    </select>
+                    <input type="number" id="cusCred" style="display:none; margin-top:5px;" placeholder="Nhập số TC..."
+                        autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>Tuần Học (Từ - Đến) (*)</label>
+                    <div class="form-row">
+                        <input type="number" id="startWeek" placeholder="Bắt đầu" min="1" max="60" autocomplete="off"
+                            oninput="triggerCheckBusy()">
+                        <input type="number" id="endWeek" placeholder="Kết thúc" min="1" max="60" autocomplete="off"
+                            oninput="triggerCheckBusy()">
+                    </div>
+                </div>
+                <div class="sec-title st-sched">⏰ LỊCH HỌC</div>
+                <div id="schedule-container"></div>
+                <button class="btn-add-row" onclick="addScheduleRow()">+ Thêm buổi học</button>
+                <div class="sec-title st-opt">🔍 TÙY CHỌN</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Mã ĐK</label>
+                        <input type="text" id="regCode" placeholder="Mã..."
+                            oninput="this.value = this.value.toUpperCase()" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>Giảng Viên</label>
+                        <input type="text" id="lecturer" placeholder="Tên GV..." autocomplete="off">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="mainBtn" class="btn-submit" onclick="handleSubmit()">+ THÊM</button>
+                    <button id="cancelBtn" class="btn-cancel" onclick="resetForm()">Hủy</button>
+                </div>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="toolbar">
+                <div class="total-box">Tổng: <span class="total-badge" id="totalCredits">0</span> TC</div>
+                <div class="tools-group">
+                    <button class="btn-tool btn-tkb" onclick="openTKB()">📅 TKB</button>
+                    <button class="btn-tool btn-save" onclick="exportData()">💾 Lưu</button>
+                    <button class="btn-tool btn-load" onclick="document.getElementById('fileInput').click()">📂
+                        Mở</button>
+                    <button class="btn-tool btn-clear" onclick="clearAll()">🗑️ Xóa</button>
+                    <button class="btn-tool btn-snap" onclick="snap()">📸 Ảnh</button>
+                    <input type="file" id="fileInput" hidden accept=".json" onchange="importData(this)">
+                </div>
+            </div>
+            <div class="table-wrapper" id="captureArea">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="5%">STT</th>
+                                <th width="10%">Mã</th>
+                                <th width="20%">Lớp</th>
+                                <th width="5%">Tín Chỉ</th>
+                                <th width="10%">Tuần</th>
+                                <th width="5%">Thứ</th>
+                                <th width="15%">Giờ</th>
+                                <th width="15%">Phòng</th>
+                                <th width="10%" class="col-action">Sửa/Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let scheduleData = [];
+        let editingId = null;
+        let sCount = 0;
+        window.onload = () => addScheduleRow();
+        function showAlert(msg, type = 'normal') {
+            const m = document.getElementById('alertModal');
+            const icon = document.getElementById('alertIcon');
+            const title = document.getElementById('alertTitle');
+            const txt = document.getElementById('alertMsg');
+            const btn = document.getElementById('alertBtn');
+            btn.style.background = 'linear-gradient(45deg, #ff8a80, #ff5252)';
+            if (type === 'error') {
+                icon.innerText = '😣'; title.innerText = 'Opps!'; title.style.color = '#c62828';
+                btn.style.background = 'linear-gradient(45deg, #ef5350, #d32f2f)';
+            }
+            else if (type === 'conflict') {
+                icon.innerText = '🙀'; title.innerText = 'Trùng Lịch!'; title.style.color = '#ef6c00';
+                btn.style.background = 'linear-gradient(45deg, #ffb74d, #f57c00)';
+            }
+            else if (type === 'success') {
+                icon.innerText = '🎉'; title.innerText = 'Thành Công!'; title.style.color = '#2e7d32';
+                btn.style.background = 'linear-gradient(45deg, #66bb6a, #43a047)';
+            }
+            else {
+                icon.innerText = '🔔'; title.innerText = 'Thông báo'; title.style.color = '#333';
+            }
+            txt.innerHTML = msg; m.style.display = 'flex';
+        }
+        function openTKB() {
+            if (scheduleData.length === 0) return showAlert("Danh sách trống!", "error");
+            let maxWeek = 0; let minWeek = 100;
+            scheduleData.forEach(i => { if (i.endW > maxWeek) maxWeek = i.endW; if (i.startW < minWeek) minWeek = i.startW; });
+            if (minWeek > maxWeek) { minWeek = 1; maxWeek = 20; }
+            let split = Math.floor((minWeek + maxWeek) / 2);
+            if (maxWeek - minWeek < 5) split = maxWeek;
+            document.getElementById('tkbPreviewBody').innerHTML = generateTKBHTML(split, minWeek, maxWeek);
+            document.getElementById('tkbModal').style.display = 'flex';
+        }
+        function generateTKBHTML(split, min, max) {
+            return `<div class="tkb-column"><div class="phase-badge p1">GIAI ĐOẠN 1 (Tuần ${min}-${split})</div><div class="tkb-scroll-area"><table class="tkb-table-inner"><thead><tr><th>Ca</th><th>Hai</th><th>Ba</th><th>Tư</th><th>Năm</th><th>Sáu</th><th>Bảy</th><th>CN</th></tr></thead><tbody>${generatePhaseRows(1, split)}</tbody></table></div></div><div class="tkb-column"><div class="phase-badge p2">GIAI ĐOẠN 2 (Tuần ${split + 1}-${max})</div><div class="tkb-scroll-area"><table class="tkb-table-inner"><thead><tr><th>Ca</th><th>Hai</th><th>Ba</th><th>Tư</th><th>Năm</th><th>Sáu</th><th>Bảy</th><th>CN</th></tr></thead><tbody>${generatePhaseRows(2, split)}</tbody></table></div></div>`;
+        }
+        function generatePhaseRows(phase, split) {
+            let html = ''; const times = [{ n: 'Sáng', s: 0, e: 720 }, { n: 'Chiều', s: 720, e: 1020 }, { n: 'Tối', s: 1020, e: 1440 }];
+            times.forEach(t => {
+                html += `<tr><td style="font-weight:bold;background:#fffde7;vertical-align:middle;border-bottom:2px solid #ddd;">${t.n}</td>`;
+                for (let d = 2; d <= 8; d++) {
+                    let cell = '';
+                    let items = scheduleData.filter(i => {
+                        if (parseInt(i.day) !== d) return false;
+                        if (i.sMin < t.s || i.sMin >= t.e) return false;
+                        return (phase === 1) ? i.startW <= split : i.endW > split;
+                    });
+                    items.sort((a, b) => a.sMin - b.sMin);
+                    items.forEach(it => {
+                        let showW = `${it.startW}-${it.endW}`;
+                        if (phase === 1 && it.endW > split) showW = `${it.startW}➝${it.endW}`;
+                        cell += `<div class="tkb-item"><b>${it.name}</b><div style="font-size:11px">⏰ ${it.startT}-${it.endT}</div><div class="tkb-loc">📍 ${it.location}</div><div class="tkb-week">📅 Tuần: ${showW}</div></div>`;
+                    });
+                    html += `<td>${cell}</td>`;
+                }
+                html += '</tr>';
+            });
+            return html;
+        }
+        function snapTKB() {
+            let maxWeek = 0; let minWeek = 100;
+            scheduleData.forEach(i => { if (i.endW > maxWeek) maxWeek = i.endW; if (i.startW < minWeek) minWeek = i.startW; });
+            if (minWeek > maxWeek) { minWeek = 1; maxWeek = 20; }
+            let split = Math.floor((minWeek + maxWeek) / 2);
+            if (maxWeek - minWeek < 5) split = maxWeek;
+            const ov = document.getElementById('snapshot-overlay'); const ct = document.getElementById('snapshot-content');
+            ct.innerHTML = generateTKBHTML(split, minWeek, maxWeek);
+            ct.querySelectorAll('.tkb-column').forEach(c => c.classList.add('snap-col'));
+            ov.style.display = 'flex';
+            setTimeout(() => {
+                html2canvas(ov, { scale: 3, useCORS: true, backgroundColor: '#ffffff', height: ov.scrollHeight, windowHeight: ov.scrollHeight }).then(canvas => {
+                    canvas.toBlob(blob => {
+                        try {
+                            const item = new ClipboardItem({ "image/png": blob });
+                            navigator.clipboard.write([item]).then(() => showAlert("Đã chụp & copy! 📸", "success"));
+                        } catch (e) {
+                            const l = document.createElement('a'); l.download = 'TKB.png'; l.href = canvas.toDataURL(); l.click();
+                            showAlert("Đã tải ảnh! 📂", "success");
+                        }
+                        ov.style.display = 'none';
+                    });
+                }).catch(() => { ov.style.display = 'none'; showAlert("Lỗi chụp!", "error"); });
+            }, 500);
+        }
+        function triggerCheckBusy() {
+            const rows = document.querySelectorAll('.session-block');
+            rows.forEach(row => checkRowBusy(row));
+        }
+        function checkRowBusy(row) {
+            const sW = parseInt(document.getElementById('startWeek').value);
+            const eW = parseInt(document.getElementById('endWeek').value);
+            if (!sW || !eW) return;
+            const daySelect = row.querySelector('.inp-day');
+            const timeSelect = row.querySelector('.inp-time');
+            const day = daySelect.value;
+            Array.from(timeSelect.options).forEach(opt => {
+                if (opt.value === '' || opt.value === 'custom' || opt.tagName === 'OPTGROUP') return;
+                let [sT, eT] = opt.value.split('|');
+                let sMin = toMin(sT);
+                let eMin = toMin(eT);
+                let isBusy = false;
+                for (let item of scheduleData) {
+                    if (editingId && item.id === editingId) continue;
+                    if (item.day === day &&
+                        Math.max(sW, item.startW) <= Math.min(eW, item.endW) &&
+                        Math.max(sMin, item.sMin) < Math.min(eMin, item.eMin)
+                    ) { isBusy = true; break; }
+                }
+                if (isBusy) {
+                    opt.disabled = true;
+                    if (!opt.text.includes('⛔')) opt.text += ' ⛔ (Bận)';
+                    opt.style.color = '#ef5350';
+                } else {
+                    opt.disabled = false;
+                    opt.text = opt.text.replace(' ⛔ (Bận)', '');
+                    opt.style.color = '#333';
+                }
+            });
+        }
+        function toggleCustom(sel, id) { document.getElementById(id).style.display = (sel.value === 'custom') ? 'block' : 'none'; }
+        function addScheduleRow(d = null) {
+            sCount++; const c = document.getElementById('schedule-container'); const div = document.createElement('div');
+            div.className = 'session-block';
+            div.innerHTML = `
+                ${c.children.length > 0 ? '<button class="btn-remove-session" onclick="this.parentElement.remove()">✕</button>' : ''}
+                <div class="form-group"><label>Thứ</label>
+                    <select class="inp-day" onchange="triggerCheckBusy()">
+                        <option value="2">Thứ 2</option><option value="3">Thứ 3</option><option value="4">Thứ 4</option>
+                        <option value="5">Thứ 5</option><option value="6">Thứ 6</option><option value="7">Thứ 7</option><option value="8">Chủ nhật</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Ca Học</label>
+                    <select class="inp-time" onchange="toggleCustom(this, 'tc_${sCount}')">
+                        <option value="">-- Chọn --</option>
+                        <optgroup label="Sáng">
+                            <option value="07:00|09:00">07:00-09:00</option><option value="07:00|10:15">07:00-10:15</option>
+                            <option value="07:00|11:15">07:00-11:15</option><option value="09:15|11:15">09:15-11:15</option>
+                        </optgroup>
+                        <optgroup label="Chiều">
+                            <option value="13:00|15:00">13:00-15:00</option><option value="13:00|16:15">13:00-16:15</option>
+                            <option value="13:00|17:15">13:00-17:15</option><option value="15:15|17:15">15:15-17:15</option>
+                        </optgroup>
+                        <optgroup label="Tối">
+                            <option value="17:45|21:00">17:45-21:00</option>
+                        </optgroup>
+                        <option value="custom" style="color:red">-- Nhập tay --</option>
+                    </select>
+                    <input id="tc_${sCount}" class="inp-cus-time" style="display:none;margin-top:5px" placeholder="VD: 08:00 - 10:00" autocomplete="off">
+                </div>
+                <div class="form-group"><label>Địa điểm</label>
+                    <select class="inp-loc" onchange="toggleCustom(this, 'lc_${sCount}')">
+                        <option value="">-- Chọn --</option><option value="Online">Online</option>
+                        <optgroup label="Cơ sở">
+                            <option value="59 Hà Bổng">59 Hà Bổng</option>
+                            <option value="209 Phan Thanh">209 Phan Thanh</option>
+                            <option value="254 Nguyễn Văn Linh">254 Nguyễn Văn Linh</option>
+                            <option value="137 Nguyễn Văn Linh">137 Nguyễn Văn Linh</option>
+                            <option value="03 Quang Trung">03 Quang Trung</option>
+                            <option value="K7/25 Quang Trung">K7/25 Quang Trung</option>
+                            <option value="120 Hoàng Minh Thảo">120 Hoàng Minh Thảo</option>
+                            <option value="78 Phan Văn Trị">78 Phan Văn Trị</option>
+                        </optgroup>
+                        <option value="custom" style="color:red">-- Nhập tay --</option>
+                    </select>
+                    <input id="lc_${sCount}" class="inp-cus-loc" style="display:none;margin-top:5px" placeholder="Phòng..." autocomplete="off">
+                </div>`;
+            c.appendChild(div);
+            if (d) {
+                div.querySelector('.inp-day').value = d.day;
+                const tSel = div.querySelector('.inp-time'); const tVal = `${d.startT}|${d.endT}`;
+                if ([...tSel.options].some(o => o.value === tVal)) tSel.value = tVal;
+                else { tSel.value = 'custom'; div.querySelector('.inp-cus-time').style.display = 'block'; div.querySelector('.inp-cus-time').value = `${d.startT} - ${d.endT}`; }
+                const lSel = div.querySelector('.inp-loc');
+                if ([...lSel.options].some(o => o.value === d.location)) lSel.value = d.location;
+                else { lSel.value = 'custom'; div.querySelector('.inp-cus-loc').style.display = 'block'; div.querySelector('.inp-cus-loc').value = d.location; }
+            }
+            triggerCheckBusy();
+        }
+        function checkConflict(n, ignoreId) {
+            for (let x of scheduleData) {
+                if (ignoreId && x.id === ignoreId) continue;
+                if (x.day !== n.day) continue;
+                if (Math.max(x.startW, n.startW) <= Math.min(x.endW, n.endW)) {
+                    if (Math.max(x.sMin, n.sMin) < Math.min(x.eMin, n.eMin)) {
+                        return { isConflict: true, msg: `Trùng: <b style="color:#d84315">${x.name}</b><br>Thứ ${x.day}, Tuần ${x.startW}-${x.endW}<br>Giờ: ${x.startT}-${x.endT}` };
+                    }
+                }
+            }
+            return { isConflict: false };
+        }
+        function handleSubmit() {
+            const name = document.getElementById('className').value.trim().toUpperCase();
+            const sW = parseInt(document.getElementById('startWeek').value);
+            const eW = parseInt(document.getElementById('endWeek').value);
+            let cred = document.getElementById('credits').value; if (cred === 'custom') cred = document.getElementById('cusCred').value;
+            const code = document.getElementById('regCode').value.trim().toUpperCase();
+            const lec = document.getElementById('lecturer').value.trim();
+            if (!name || isNaN(sW) || isNaN(eW) || !cred) return showAlert("Thiếu thông tin!", "error");
+            if (sW > eW) return showAlert("Tuần bắt đầu > kết thúc!", "error");
+            if (scheduleData.some(i => i.id !== editingId && i.name === name)) { if (!confirm(`Môn ${name} đã có. Thêm tiếp?`)) return; }
+            const sessions = []; const blocks = document.querySelectorAll('.session-block');
+            for (let b of blocks) {
+                const day = b.querySelector('.inp-day').value;
+                const tSel = b.querySelector('.inp-time').value;
+                const tCus = b.querySelector('.inp-cus-time').value;
+                const lSel = b.querySelector('.inp-loc').value;
+                const lCus = b.querySelector('.inp-cus-loc').value;
+                let sT, eT;
+                if (tSel === 'custom') {
+                    if (!tCus.includes('-')) return showAlert("Sai định dạng giờ!", "error");
+                    [sT, eT] = tCus.split('-').map(x => x.trim());
+                } else if (tSel) { [sT, eT] = tSel.split('|'); }
+                else return showAlert("Chưa chọn giờ!", "error");
+                let loc = (lSel === 'custom') ? lCus : lSel;
+                if (!loc) return showAlert("Chưa nhập phòng!", "error");
+                const sMin = toMin(sT); const eMin = toMin(eT);
+                const sObj = { day, startT: sT, endT: eT, location: loc, sMin, eMin, startW: sW, endW: eW };
+                let conf = checkConflict(sObj, editingId);
+                if (conf.isConflict) return showAlert(conf.msg, "conflict");
+                for (let p of sessions) {
+                    if (p.day === day && Math.max(p.sMin, sMin) < Math.min(p.eMin, eMin)) return showAlert("Trùng giờ trong form!", "error");
+                }
+                sessions.push(sObj);
+            }
+            if (editingId) {
+                const idx = scheduleData.findIndex(i => i.id === editingId);
+                if (idx !== -1) scheduleData.splice(idx, 1);
+                sessions.forEach((sess, i) => scheduleData.push({ id: (i === 0 ? editingId : Date.now() + i), code, name, credits: parseInt(cred), lecturer: lec, ...sess }));
+                showAlert("Đã cập nhật!", "success"); resetForm();
+            } else {
+                sessions.forEach((sess, i) => scheduleData.push({ id: Date.now() + i, code, name, credits: parseInt(cred), lecturer: lec, ...sess }));
+                showAlert(`Đã thêm ${name}!`, "success"); clearInputs();
+            }
+            renderTable(); triggerCheckBusy();
+        }
+        function renderTable() {
+            const tb = document.getElementById('schedBody'); tb.innerHTML = '';
+            scheduleData.sort((a, b) => (a.startW - b.startW) || (a.day - b.day) || (a.sMin - b.sMin));
+            const groups = {}; scheduleData.forEach(i => { if (!groups[i.name]) groups[i.name] = []; groups[i.name].push(i); });
+            let stt = 1;
+            for (let n in groups) {
+                const g = groups[n]; const f = g[0];
+                let wH = '', dH = '', tH = '', lH = '', aH = '';
+                g.forEach((s, ix) => {
+                    const st = (ix === g.length - 1) ? '' : 'border-bottom:1px dashed #e0e0e0;margin-bottom:4px;padding-bottom:4px;';
+                    wH += `<div style="${st}">${s.startW}-${s.endW}</div>`;
+                    dH += `<div style="${st}">${s.day === '8' ? 'Chủ nhật' : 'Thứ ' + s.day}</div>`;
+                    tH += `<div style="${st}">${s.startT}-${s.endT}</div>`;
+                    lH += `<div style="${st};font-weight:bold">${s.location}</div>`;
+                    aH += `<div style="${st}" class="action-cell">
+                        <button onclick="addMore(${s.id})" title="Thêm" style="color:#2e7d32">⊕</button>
+                        <button onclick="editRow(${s.id})" title="Sửa" style="color:#ff8f00">✎</button>
+                        <button onclick="delRow(${s.id})" title="Xóa" style="color:#c62828">✕</button>
+                    </div>`;
+                });
+                tb.innerHTML += `<tr><td>${stt++}</td><td style="font-family:monospace;color:#ef5350">${f.code || '--'}</td><td style="font-weight:bold;color:#2e7d32">${n}</td><td style="font-weight:bold;color:#d84315">${f.credits}</td><td>${wH}</td><td>${dH}</td><td>${tH}</td><td>${lH}</td><td>${aH}</td></tr>`;
+            }
+            updateTotal();
+        }
+        function editRow(id) {
+            const i = scheduleData.find(x => x.id === id); if (!i) return;
+            document.getElementById('className').value = i.name;
+            document.getElementById('startWeek').value = i.startW;
+            document.getElementById('endWeek').value = i.endW;
+            const cr = document.getElementById('credits');
+            if ([...cr.options].some(o => o.value == i.credits)) { cr.value = i.credits; document.getElementById('cusCred').style.display = 'none'; }
+            else { cr.value = 'custom'; document.getElementById('cusCred').style.display = 'block'; document.getElementById('cusCred').value = i.credits; }
+            document.getElementById('regCode').value = i.code || ''; document.getElementById('lecturer').value = i.lecturer || '';
+            document.getElementById('schedule-container').innerHTML = '';
+            addScheduleRow(i); editingId = id;
+            document.getElementById('mainBtn').innerText = "💾 LƯU SỬA";
+            document.getElementById('mainBtn').classList.add('editing');
+            document.getElementById('cancelBtn').style.display = 'inline-block';
+        }
+        function addMore(id) {
+            const i = scheduleData.find(x => x.id === id); if (!i) return;
+            resetForm();
+            document.getElementById('className').value = i.name;
+            document.getElementById('startWeek').value = i.startW;
+            document.getElementById('endWeek').value = i.endW;
+            document.getElementById('schedule-container').innerHTML = '';
+            addScheduleRow(); showAlert(`Đã lấy thông tin: ${i.name}`, 'success');
+        }
+        function resetForm() {
+            editingId = null; document.getElementById('mainBtn').innerText = "+ THÊM";
+            document.getElementById('mainBtn').classList.remove('editing');
+            document.getElementById('cancelBtn').style.display = 'none'; clearInputs();
+        }
+        function clearInputs() {
+            document.getElementById('className').value = '';
+            document.getElementById('startWeek').value = ''; document.getElementById('endWeek').value = '';
+            document.getElementById('regCode').value = ''; document.getElementById('lecturer').value = '';
+            document.getElementById('schedule-container').innerHTML = ''; addScheduleRow();
+        }
+        function delRow(id) { if (confirm("Xóa?")) { scheduleData = scheduleData.filter(x => x.id !== id); renderTable(); triggerCheckBusy(); } }
+        function clearAll() { if (confirm("Xóa hết?")) { scheduleData = []; renderTable(); triggerCheckBusy(); } }
+        function updateTotal() {
+            const u = new Set();
+            document.getElementById('totalCredits').innerText = scheduleData.reduce((a, c) => { if (!u.has(c.name)) { u.add(c.name); return a + c.credits; } return a; }, 0);
+        }
+        function toMin(s) { const [h, m] = s.split(':'); return h * 60 + +m; }
+        function exportData() {
+            const a = document.createElement('a'); a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(scheduleData));
+            a.download = "Lich_Cute.json"; a.click();
+        }
+        function importData(inp) {
+            const f = inp.files[0]; if (!f) return;
+            const r = new FileReader();
+            r.onload = e => { try { scheduleData = JSON.parse(e.target.result); renderTable(); showAlert("Đã mở file!", "success"); triggerCheckBusy(); } catch (e) { showAlert("Lỗi file!", "error"); } };
+            r.readAsText(f); inp.value = '';
+        }
+        function snap() {
+            const a = document.getElementById("captureArea");
+            html2canvas(a, { scale: 2 }).then(c => c.toBlob(b => {
+                navigator.clipboard.write([new ClipboardItem({ "image/png": b })]);
+                showAlert("Đã chụp ảnh!", "success");
+            }));
+        }
+    </script>
+</body>
+
+</html>
