@@ -963,18 +963,36 @@
             if (finalWeight <= 0) { msgBox.innerHTML = "Đã đủ 100% trọng số!"; tableBody.innerHTML = ""; return; }
 
             msgBox.innerHTML = `Thi cuối kỳ chiếm: <strong style="color:#A1242E">${finalWeight}%</strong>`;
-            const targets = [{ l: 'A+', s: 9.5 }, { l: 'A', s: 8.5 }, { l: 'A-', s: 8.0 }, { l: 'B+', s: 7.5 }, { l: 'B', s: 7.0 }, { l: 'B-', s: 6.5 }, { l: 'C+', s: 6.0 }, { l: 'C', s: 5.5 }, { l: 'C-', s: 4.5 }, { l: 'D (qua môn)', s: 4.0 }];
+
+            // Danh sách điểm mốc
+            const targets = [
+                { l: 'A+', s: 9.5 }, { l: 'A', s: 8.5 }, { l: 'A-', s: 8.0 },
+                { l: 'B+', s: 7.5 }, { l: 'B', s: 7.0 }, { l: 'B-', s: 6.5 },
+                { l: 'C+', s: 6.0 }, { l: 'C', s: 5.5 }, { l: 'C-', s: 4.5 },
+                { l: 'D (qua môn)', s: 4.0 }
+            ];
 
             let html = '';
             const currentScoreRaw = scorePerc / 10;
 
             targets.forEach(t => {
                 let needed = (t.s - currentScoreRaw) / (finalWeight / 100);
-                if (needed > 10) return;
+                if (needed > 10) return; // Nếu cần > 10 điểm thì không hiện (vì không thể đạt)
+
                 let valHtml = '', color = '#333';
-                if (needed <= 1.0) { valHtml = '> 1.00 (tránh liệt)'; color = '#28a745'; }
-                else { valHtml = `≥ ${needed.toFixed(2)}`; if (needed > 7) color = '#d63384'; }
-                html += `<tr><td>Điểm chữ <strong>${t.l}</strong> (${t.s})</td><td style="text-align:right; color:${color}; font-weight:bold;">${valHtml}</td></tr>`;
+                if (needed <= 1.0) {
+                    valHtml = '> 1.00 (tránh liệt)';
+                    color = '#28a745';
+                } else {
+                    valHtml = `≥ ${needed.toFixed(2)}`;
+                    if (needed > 7) color = '#d63384';
+                }
+
+                // --- ĐÃ CHỈNH SỬA: Xóa phần (${t.s}) ---
+                html += `<tr>
+                            <td>Điểm chữ <strong>${t.l}</strong></td>
+                            <td style="text-align:right; color:${color}; font-weight:bold;">${valHtml}</td>
+                         </tr>`;
             });
 
             if (html === '') html = "<tr><td colspan='2' style='color:red; text-align:center;'>Rớt chắc rồi! (Cần > 10đ)</td></tr>";
