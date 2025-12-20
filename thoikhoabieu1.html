@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sắp Xếp Lịch Tín Chỉ</title>
+    <title>Sắp Xếp Lịch Tín Chỉ - Cute Version</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         :root {
@@ -134,7 +134,8 @@
         }
 
         input,
-        select {
+        select,
+        textarea {
             width: 100%;
             padding: 10px;
             border: 2px solid #ffe0b2;
@@ -146,7 +147,8 @@
         }
 
         input:focus,
-        select:focus {
+        select:focus,
+        textarea:focus {
             outline: none;
             border-color: var(--primary);
             background: white;
@@ -312,6 +314,12 @@
             box-shadow: 0 3px 0 #e65100;
         }
 
+        /* Nút Nhanh mới */
+        .btn-quick {
+            background: linear-gradient(45deg, #ba68c8, #ab47bc);
+            box-shadow: 0 3px 0 #7b1fa2;
+        }
+
         .table-wrapper {
             background: white;
             border-radius: 15px;
@@ -408,6 +416,30 @@
             overflow: hidden;
             animation: slideUp 0.4s ease-out;
             border: 4px solid var(--secondary);
+        }
+
+        /* Style cho Modal Nhanh */
+        .modal-quick-box {
+            background: #fff;
+            width: 600px;
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+            border: 4px solid #ba68c8;
+            animation: bounceIn 0.4s;
+        }
+
+        .quick-textarea {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 15px;
+            font-family: monospace;
+            padding: 10px;
+            border: 2px dashed #ba68c8;
+            border-radius: 10px;
+            resize: none;
         }
 
         .tkb-header {
@@ -640,6 +672,24 @@
                 style="background: linear-gradient(45deg, #ff8a80, #ff5252); color:white; border:none; padding:12px 40px; border-radius: 50px; font-weight:bold; cursor:pointer; font-size:16px; box-shadow: 0 5px 15px rgba(255, 82, 82, 0.4);">OK</button>
         </div>
     </div>
+
+    <div id="quickModal" class="modal-overlay">
+        <div class="modal-quick-box">
+            <h2 style="color: #8e24aa; margin-top:0;">⚡ Import Nhanh</h2>
+            <p style="font-size:13px; color:#666; margin-bottom:10px;">Copy toàn bộ bảng lịch (bôi đen như ảnh) rồi dán
+                vào đây:</p>
+            <textarea id="quickPasteArea" class="quick-textarea"
+                placeholder="Dán nội dung vào đây... Ví dụ: CHI 110 BR..."></textarea>
+            <div style="display:flex; gap:10px; justify-content: flex-end;">
+                <button onclick="processQuickImport()"
+                    style="background:#8e24aa; color:white; border:none; padding:10px 25px; border-radius:10px; cursor:pointer; font-weight:bold;">🚀
+                    Xử Lý</button>
+                <button onclick="document.getElementById('quickModal').style.display='none'"
+                    style="background:#b0bec5; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:bold;">Đóng</button>
+            </div>
+        </div>
+    </div>
+
     <div id="tkbModal" class="modal-overlay">
         <div class="modal-tkb-box">
             <div class="tkb-header">
@@ -715,6 +765,7 @@
             <div class="toolbar">
                 <div class="total-box">Tổng: <span class="total-badge" id="totalCredits">0</span> TC</div>
                 <div class="tools-group">
+                    <button class="btn-tool btn-quick" onclick="openQuickImport()">⚡ Nhanh</button>
                     <button class="btn-tool btn-tkb" onclick="openTKB()">📅 TKB</button>
                     <button class="btn-tool btn-save" onclick="exportData()">💾 Lưu</button>
                     <button class="btn-tool btn-load" onclick="document.getElementById('fileInput').click()">📂
@@ -775,6 +826,122 @@
             }
             txt.innerHTML = msg; m.style.display = 'flex';
         }
+
+        // --- XỬ LÝ QUICK IMPORT ---
+        function openQuickImport() {
+            document.getElementById('quickPasteArea').value = '';
+            document.getElementById('quickModal').style.display = 'flex';
+            document.getElementById('quickPasteArea').focus();
+        }
+
+        function processQuickImport() {
+            const raw = document.getElementById('quickPasteArea').value;
+            if (!raw.trim()) return;
+
+            // Pattern để tách từng môn: [MÃ LỚP][Tên môn][Loại hình]
+            // Dựa vào format: XXX 123 XX (Mã) ... (LEC|LAB|WOR|DEM)
+            // Cắt chuỗi theo Regex lookahead của mã lớp
+            const subjectRegex = /(?=(^[A-Z]{2,5}[- ]?[A-Z0-9]{3,5}\s[A-Z0-9]{1,4}))/gm;
+            const parts = raw.split(subjectRegex).filter(p => p.trim().length > 10); // Lọc rác
+
+            let addedCount = 0;
+
+            parts.forEach(part => {
+                try {
+                    // 1. Lấy Mã và Tên
+                    // Format: [CODE] [NAME] (LEC|LAB...)
+                    const typeMatch = part.match(/(LEC|LAB|WOR|DEM)/);
+                    if (!typeMatch) return;
+
+                    const typeIndex = typeMatch.index;
+                    const header = part.substring(0, typeIndex);
+
+                    // Tách Mã (Code) ở đầu dòng
+                    const codeMatch = header.match(/^([A-Z]{2,5}[- ]?[A-Z0-9]{3,5}\s[A-Z0-9]{1,4})/);
+                    if (!codeMatch) return;
+
+                    const code = codeMatch[0].trim();
+                    const name = header.substring(code.length).trim();
+
+                    // 2. Lấy Tín chỉ (Số ở cuối cùng của block hoặc gần cuối)
+                    // Thường là số đơn lẻ ở cuối string
+                    const creditMatch = part.match(/(\d)\s*$/);
+                    const credits = creditMatch ? parseInt(creditMatch[1]) : 0;
+
+                    // 3. Lấy Tuần (Format: 33--40)
+                    const weekMatch = part.match(/(\d{1,2})--(\d{1,2})/);
+                    if (!weekMatch) return;
+                    const startW = parseInt(weekMatch[1]);
+                    const endW = parseInt(weekMatch[2]);
+
+                    // 4. Lấy Lịch học (T2: 07:00 -10:15)
+                    // Regex tìm pattern: T(số|CN): hh:mm -hh:mm
+                    const timeRegex = /(T\d|CN):\s*(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})/g;
+                    let match;
+                    const sessions = [];
+
+                    // Tìm địa điểm (Thường là tên đường hoặc tên toà nhà xuất hiện trong text)
+                    let location = "Xem lịch";
+                    const locKeywords = ["Nguyễn Văn Linh", "Quang Trung", "Phan Thanh", "Hòa Khánh", "Online", "Vietinbank", "Lê Duẩn"];
+                    for (let kw of locKeywords) {
+                        if (part.includes(kw)) {
+                            location = kw;
+                            if (kw === "Online") location = "Online"; // Clean up
+                            // Cố gắng lấy số phòng trước địa điểm nếu có
+                            // Logic phức tạp nên lấy địa điểm chính thôi cho gọn
+                            break;
+                        }
+                    }
+
+                    while ((match = timeRegex.exec(part)) !== null) {
+                        let dStr = match[1];
+                        let day = dStr === 'CN' ? '8' : dStr.replace('T', '');
+                        let sT = match[2];
+                        let eT = match[3];
+
+                        sessions.push({
+                            day: day,
+                            startT: sT,
+                            endT: eT,
+                            location: location,
+                            sMin: toMin(sT),
+                            eMin: toMin(eT),
+                            startW: startW,
+                            endW: endW
+                        });
+                    }
+
+                    if (sessions.length > 0) {
+                        // Kiểm tra trùng môn (theo tên)
+                        if (!scheduleData.some(x => x.name === name)) {
+                            sessions.forEach((sess, idx) => {
+                                scheduleData.push({
+                                    id: Date.now() + Math.random(),
+                                    code: code,
+                                    name: name,
+                                    credits: credits,
+                                    lecturer: '',
+                                    ...sess
+                                });
+                            });
+                            addedCount++;
+                        }
+                    }
+
+                } catch (e) {
+                    console.error("Lỗi parse dòng:", part, e);
+                }
+            });
+
+            document.getElementById('quickModal').style.display = 'none';
+            renderTable();
+            triggerCheckBusy();
+            if (addedCount > 0) showAlert(`Đã thêm nhanh ${addedCount} môn!`, "success");
+            else showAlert("Không tìm thấy dữ liệu hợp lệ hoặc môn đã tồn tại!", "error");
+        }
+
+        // --- HẾT XỬ LÝ IMPORT ---
+
         function openTKB() {
             if (scheduleData.length === 0) return showAlert("Danh sách trống!", "error");
             let maxWeek = 0; let minWeek = 100;
@@ -872,6 +1039,7 @@
             });
         }
         function toggleCustom(sel, id) { document.getElementById(id).style.display = (sel.value === 'custom') ? 'block' : 'none'; }
+
         function addScheduleRow(d = null) {
             sCount++; const c = document.getElementById('schedule-container'); const div = document.createElement('div');
             div.className = 'session-block';
@@ -892,7 +1060,8 @@
                         </optgroup>
                         <optgroup label="Chiều">
                             <option value="13:00|15:00">13:00-15:00</option><option value="13:00|16:15">13:00-16:15</option>
-                            <option value="13:00|17:15">13:00-17:15</option><option value="15:15|17:15">15:15-17:15</option>
+                            <option value="13:00|17:15">13:00-17:15</option><option value="14:00|16:00">14:00-16:00</option>
+                            <option value="15:15|17:15">15:15-17:15</option><option value="16:00|18:45">16:00-18:45</option>
                         </optgroup>
                         <optgroup label="Tối">
                             <option value="17:45|21:00">17:45-21:00</option>
@@ -930,6 +1099,7 @@
             }
             triggerCheckBusy();
         }
+
         function checkConflict(n, ignoreId) {
             for (let x of scheduleData) {
                 if (ignoreId && x.id === ignoreId) continue;
@@ -951,7 +1121,12 @@
             const lec = document.getElementById('lecturer').value.trim();
             if (!name || isNaN(sW) || isNaN(eW) || !cred) return showAlert("Thiếu thông tin!", "error");
             if (sW > eW) return showAlert("Tuần bắt đầu > kết thúc!", "error");
-            if (scheduleData.some(i => i.id !== editingId && i.name === name)) { if (!confirm(`Môn ${name} đã có. Thêm tiếp?`)) return; }
+
+            // Logic cũ: hỏi nếu môn đã có. Với nút Nhanh thì tự bỏ qua, với nút Thêm tay thì hỏi.
+            if (scheduleData.some(i => i.id !== editingId && i.name === name)) {
+                if (!confirm(`Môn ${name} đã có. Thêm lớp khác cho môn này?`)) return;
+            }
+
             const sessions = []; const blocks = document.querySelectorAll('.session-block');
             for (let b of blocks) {
                 const day = b.querySelector('.inp-day').value;
@@ -1001,12 +1176,15 @@
                     dH += `<div style="${st}">${s.day === '8' ? 'Chủ nhật' : 'Thứ ' + s.day}</div>`;
                     tH += `<div style="${st}">${s.startT}-${s.endT}</div>`;
                     lH += `<div style="${st};font-weight:bold">${s.location}</div>`;
-                    aH += `<div style="${st}" class="action-cell">
-                        <button onclick="addMore(${s.id})" title="Thêm" style="color:#2e7d32">⊕</button>
-                        <button onclick="editRow(${s.id})" title="Sửa" style="color:#ff8f00">✎</button>
-                        <button onclick="delRow(${s.id})" title="Xóa" style="color:#c62828">✕</button>
-                    </div>`;
+                    // Nút Xóa ở đây sẽ gọi hàm xóa theo Tên Môn
                 });
+                // Nút xóa đại diện cho cả môn
+                aH = `<div class="action-cell">
+                        <button onclick="addMore(${f.id})" title="Thêm lớp khác" style="color:#2e7d32">⊕</button>
+                        <button onclick="editRow(${f.id})" title="Sửa" style="color:#ff8f00">✎</button>
+                        <button onclick="delSubject('${f.name}')" title="Xóa cả môn" style="color:#c62828">✕</button>
+                    </div>`;
+
                 tb.innerHTML += `<tr><td>${stt++}</td><td style="font-family:monospace;color:#ef5350">${f.code || '--'}</td><td style="font-weight:bold;color:#2e7d32">${n}</td><td style="font-weight:bold;color:#d84315">${f.credits}</td><td>${wH}</td><td>${dH}</td><td>${tH}</td><td>${lH}</td><td>${aH}</td></tr>`;
             }
             updateTotal();
@@ -1046,7 +1224,14 @@
             document.getElementById('regCode').value = ''; document.getElementById('lecturer').value = '';
             document.getElementById('schedule-container').innerHTML = ''; addScheduleRow();
         }
-        function delRow(id) { if (confirm("Xóa?")) { scheduleData = scheduleData.filter(x => x.id !== id); renderTable(); triggerCheckBusy(); } }
+        // Xóa nhóm (xóa hết theo tên môn)
+        function delSubject(name) {
+            if (confirm(`Bạn muốn xóa toàn bộ lịch môn: ${name}?`)) {
+                scheduleData = scheduleData.filter(x => x.name !== name);
+                renderTable();
+                triggerCheckBusy();
+            }
+        }
         function clearAll() { if (confirm("Xóa hết?")) { scheduleData = []; renderTable(); triggerCheckBusy(); } }
         function updateTotal() {
             const u = new Set();
